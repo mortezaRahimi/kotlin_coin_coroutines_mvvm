@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.afollestad.materialdialogs.MaterialDialog
 import com.mortex.farhadmarket.R
 import com.mortex.farhadmarket.data.model.Currency
+import com.mortex.farhadmarket.data.model.PriceItem
 import kotlinx.android.synthetic.main.list_item.view.*
 import kotlin.properties.Delegates
 
@@ -15,7 +16,7 @@ class CurrencyAdapter(private val listener: OnItemClickListener) :
     RecyclerView.Adapter<CurrencyAdapter.CatViewHolder>() {
 
     // Our data list is going to be notified when we assign a new list of data to it
-    private var list: List<Currency> by Delegates.observable(emptyList()) { _, _, _ ->
+    private var list: List<PriceItem> by Delegates.observable(emptyList()) { _, _, _ ->
         notifyDataSetChanged()
     }
 
@@ -30,19 +31,19 @@ class CurrencyAdapter(private val listener: OnItemClickListener) :
     override fun onBindViewHolder(holder: CatViewHolder, position: Int) {
         // Verify if position exists in list
         if (position != RecyclerView.NO_POSITION) {
-            val item: Currency = list[position]
+            val item: PriceItem = list[position]
             holder.bind(item, listener)
         }
     }
 
     // Update recyclerView's data
-    fun updateData(newCatsList: List<Currency>) {
+    fun updateData(newCatsList: List<PriceItem>) {
         list = newCatsList
     }
 
     class CatViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        fun bind(currency: Currency, clickListener: OnItemClickListener) {
-            itemView.drop_list_title.text = currency.name
+        fun bind(currency: PriceItem, clickListener: OnItemClickListener) {
+            itemView.drop_list_title.text = currency.currency.name
             itemView.setOnClickListener {
                 clickListener.onItemClicked(currency)
             }
@@ -52,5 +53,5 @@ class CurrencyAdapter(private val listener: OnItemClickListener) :
 }
 
 interface OnItemClickListener {
-    fun onItemClicked(currency: Currency)
+    fun onItemClicked(currency: PriceItem)
 }
