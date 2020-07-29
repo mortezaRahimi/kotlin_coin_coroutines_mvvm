@@ -1,12 +1,13 @@
 package com.mortex.farhadmarket.ui
 
-import android.app.Dialog
-import androidx.appcompat.app.AppCompatActivity
+import android.annotation.SuppressLint
 import android.os.Bundle
-import android.widget.Toast
+import android.os.Handler
+import android.view.MotionEvent
+import android.view.View
+import android.widget.EditText
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModel
-import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.afollestad.materialdialogs.MaterialDialog
@@ -15,22 +16,25 @@ import com.afollestad.materialdialogs.customview.getCustomView
 import com.mortex.farhadmarket.R
 import com.mortex.farhadmarket.data.model.Currency
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.dialog_choose_currency.*
-import kotlinx.android.synthetic.main.list_item.*
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import kotlin.math.abs
-import kotlin.math.log10
 import kotlin.math.round
-import kotlin.math.roundToLong
+
 
 class MainActivity : AppCompatActivity(), OnItemClickListener {
 
     val viewModel: MainViewModel by viewModel()
     private lateinit var currencyAdapter: CurrencyAdapter
     private var currencies: ArrayList<Currency> = ArrayList()
-    private lateinit var dialog: MaterialDialog
+
+    private val repeatUpdateHandler: Handler = Handler()
+    var mAutoIncrement = false
+    var mAutoDecrement = false
+    var mValue = 0
+    private val dialog: MaterialDialog by lazy { MaterialDialog(this) }
     private var toPay = true
 
+
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -49,22 +53,69 @@ class MainActivity : AppCompatActivity(), OnItemClickListener {
 
         result.text = "0.005"
 
-        btn_add.setOnClickListener {
-            pay_value.text = increment(pay_value.text.toString())
+        btn_add.setOnLongClickListener {
+            mAutoIncrement = true
+            repeatUpdateHandler.post(rptUpdater(pay_value))
+            return@setOnLongClickListener false
         }
 
-        btn_add_get.setOnClickListener {
-            get_value.text = increment(get_value.text.toString())
+        btn_add.setOnTouchListener { _, event ->
+            if ((event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL)
+                && mAutoIncrement
+            ) {
+                mAutoIncrement = false
+            }
+            false
         }
 
-        btn_minus.setOnClickListener {
-            pay_value.text = decrement(pay_value.text.toString())
+        btn_add_get.setOnLongClickListener {
+            mAutoIncrement = true
+            repeatUpdateHandler.post(rptUpdater(get_value))
+            return@setOnLongClickListener false
+        }
+
+        btn_add_get.setOnTouchListener { _, event ->
+            if ((event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL)
+                    && mAutoIncrement
+            ) {
+                mAutoIncrement = false
+            }
+            false
         }
 
 
-        btn_minus_get.setOnClickListener {
-            get_value.text = decrement(get_value.text.toString())
+        btn_minus.setOnLongClickListener {
+            mAutoDecrement = true
+            repeatUpdateHandler.post(rptUpdater(pay_value))
+            return@setOnLongClickListener false
         }
+
+        btn_minus.setOnTouchListener { _, event ->
+            if ((event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL)
+                    && mAutoDecrement
+            ) {
+                mAutoDecrement = false
+            }
+            false
+        }
+
+
+
+        btn_minus_get.setOnLongClickListener {
+            mAutoDecrement = true
+            repeatUpdateHandler.post(rptUpdater(get_value))
+            return@setOnLongClickListener false
+        }
+
+        btn_minus_get.setOnTouchListener { _, event ->
+            if ((event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL)
+                    && mAutoDecrement
+            ) {
+                mAutoDecrement = false
+            }
+            false
+        }
+
 
 
         selected_currency_to_pay.setOnClickListener {
@@ -82,9 +133,24 @@ class MainActivity : AppCompatActivity(), OnItemClickListener {
 
     }
 
+
+    fun rptUpdater(et:EditText) : Runnable {
+
+        return Runnable {
+            if (mAutoIncrement) {
+                et.setText(increment(et.text.toString()))
+                repeatUpdateHandler.postDelayed(rptUpdater(et), 50)
+            }
+            else if (mAutoDecrement) {
+                et.setText(decrement(et.text.toString()))
+                repeatUpdateHandler.postDelayed(rptUpdater(et), 50)
+            }
+        }
+    }
+
     private fun initDialog() {
         currencyAdapter = CurrencyAdapter(this)
-        dialog = MaterialDialog(this)
+//        dialog = MaterialDialog(this)
         dialog.customView(R.layout.dialog_choose_currency)
 
 
